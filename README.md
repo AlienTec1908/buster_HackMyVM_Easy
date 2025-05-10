@@ -9,7 +9,8 @@
 *   **Schwierigkeit:** Easy
 *   **Autor der VM:** DarkSpirit
 *   **Datum des Writeups:** 2025-01-26
-*   **Original-Writeup:** https://alientec1908.github.io/buster_HackMyVM_Easy/ (Autor: Ben C.)
+*   **Original-Writeup:** https://alientec1908.github.io/buster_HackMyVM_Easy/
+*   **Autor:** Ben C. 
 
 ## Kurzbeschreibung
 
